@@ -108,8 +108,9 @@ class Space
 	{
 		std::unordered_map<uint, Train> trains;
 		std::unordered_map<uint, Post>	posts;
-		std::map<std::string, Player> players;
+		std::map<std::string, Player>	players;
 		int								turn = -1;
+		bool							ready = true;
 	};
 public:
 	Space();
@@ -142,9 +143,9 @@ private:
 	std::unordered_map<uint, SpacePoint>	m_points;
 	std::unordered_map<uint, Line>	m_lines;
 
-	
-	DynamicLayer	m_dynamicLayer;
+	DynamicLayer	m_nextDynamicLayer;
+	DynamicLayer	m_curDynamicLayer;
 	DynamicLayer	m_prevDynamicLayer;
-	SimpleMutex		m_dynamicMutex;
+	mutable SimpleMutex		m_dynamicMutex;
 };
 

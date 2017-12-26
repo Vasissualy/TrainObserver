@@ -6,12 +6,13 @@
 #include "space_renderer.h"
 #include "math\vector3.h"
 #include "space_ui.h"
+#include <thread>
 
 
 using Vector3 = Vector3;
 
-Space::Space():
-	m_staticLayerLoaded(false)
+Space::Space()
+	: m_staticLayerLoaded(false)
 {
 }
 
@@ -76,7 +77,7 @@ bool Space::initStaticLayer(const ConnectionManager& manager)
 
 	if (reader && reader->isValid())
 	{
-		assert ( m_idx == reader->get<uint>("idx") );
+		assert(m_idx == reader->get<uint>("idx"));
 
 		if (!loadCoordinates(*reader))
 		{
@@ -99,17 +100,18 @@ bool Space::initStaticLayer(const ConnectionManager& manager)
 
 bool Space::loadDynamicLayer(const ConnectionManager& manager, int turn, DynamicLayer& layer) const
 {
-	JSONQueryWriter writer;
+	SimpleMutexHolder holder(m_dynamicMutex);
+	JSONQueryWriter   writer;
 	writer.add("idx", turn);
 	if (!manager.sendMessage(Action::TURN, false, &writer.str()))
 	{
 		return false;
 	}
 
+	auto reader = getLayer(manager, SpaceLayer::DYNAMIC);
+
 	layer.trains.clear();
 	layer.posts.clear();
-
-	auto reader = getLayer(manager, SpaceLayer::DYNAMIC);
 
 	if (reader && reader->isValid())
 	{
@@ -159,25 +161,55 @@ bool Space::updateDynamicLayer(const ConnectionManager& manager, float turn)
 	int curTurn = (int)ceilf(turn);
 	int prevTurn = (int)floorf(turn);
 
-	if (m_dynamicLayer.turn == curTurn && m_prevDynamicLayer.turn == prevTurn)
+	if (m_curDynamicLayer.turn == curTurn && m_prevDynamicLayer.turn == prevTurn)
 	{
 		return true;
 	}
 
 	bool success = true;
-	if (m_dynamicLayer.turn == prevTurn)
+	if (m_curDynamicLayer.turn == prevTurn)
 	{
-		m_prevDynamicLayer = m_dynamicLayer;
+		m_prevDynamicLayer = m_curDynamicLayer;
 	}
 	else
 	{
+		// this should not happen during play
 		success &= loadDynamicLayer(manager, prevTurn, m_prevDynamicLayer);
 	}
 
-	success &= loadDynamicLayer(manager, curTurn, m_dynamicLayer);
+	while (!m_nextDynamicLayer.ready)
+	{
+		Sleep(1);
+	}
+
+	if (curTurn == m_nextDynamicLayer.turn)
+	{
+		SimpleMutexHolder holder(m_dynamicMutex);
+		m_curDynamicLayer = m_nextDynamicLayer;
+	}
+	else
+	{
+		// this should not happen during play
+		success &= loadDynamicLayer(manager, curTurn, m_curDynamicLayer);
+	}
+
+	//queue load of next turn
+	if (curTurn + 1 != m_nextDynamicLayer.turn)
+	{
+		m_nextDynamicLayer.ready = false;
+		std::thread([this, curTurn, &manager] 
+		{
+			loadDynamicLayer(manager, curTurn + 1, m_nextDynamicLayer);
+			{
+				SimpleMutexHolder holder(m_dynamicMutex);
+				m_nextDynamicLayer.turn = curTurn + 1;
+				m_nextDynamicLayer.ready = true;
+			}
+		}).detach();
+	}
 
 	m_prevDynamicLayer.turn = prevTurn;
-	m_dynamicLayer.turn = curTurn;
+	m_curDynamicLayer.turn = curTurn;
 
 	return success;
 }
@@ -202,7 +234,7 @@ void Space::addStaticSceneToRender(SpaceRenderer& renderer)
 void Space::getWorldTrainCoords(const Train& t, Vector3& position, Vector3& dir)
 {
 	const Line& line = m_lines.at(t.line_idx);
-	float deltaPos = float(t.position) / float(line.length);
+	float		deltaPos = float(t.position) / float(line.length);
 
 	Vector3 p1(float(line.pt_1->pos.x), 0.0f, float(line.pt_1->pos.y));
 	Vector3 p2(float(line.pt_2->pos.x), 0.0f, float(line.pt_2->pos.y));
@@ -220,10 +252,10 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 {
 	renderer.clearDynamics();
 
-	for (const auto& train : m_dynamicLayer.trains)
+	for (const auto& train : m_curDynamicLayer.trains)
 	{
 		const Train& t = train.second;
-		Vector3 pos, dir;
+		Vector3		 pos, dir;
 		getWorldTrainCoords(t, pos, dir);
 
 		auto it = m_prevDynamicLayer.trains.find(t.idx);
@@ -241,27 +273,27 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 			pos = pos * interpolator + pos2 * (1.0f - interpolator);
 		}
 
-		auto itp = m_dynamicLayer.players.find(train.second.player_id);
-		SpaceUI::createTrainUI(pos, train.second, itp != m_dynamicLayer.players.end() ? &itp->second.name : nullptr);
+		auto itp = m_curDynamicLayer.players.find(train.second.player_id);
+		SpaceUI::createTrainUI(pos, train.second, itp != m_curDynamicLayer.players.end() ? &itp->second.name : nullptr);
 		renderer.setTrain(pos, dir, t.idx);
-
 	}
 
-	for (const auto& p : m_dynamicLayer.posts)
+	for (const auto& p : m_curDynamicLayer.posts)
 	{
-		auto idx = p.second.idx;
+		auto			  idx = p.second.idx;
 		const SpacePoint* point = findPoint(idx);
 
 		if (point)
 		{
 			Vector3 worldPos(coordToVector3(point->pos));
-			auto it = m_dynamicLayer.players.find(p.second.player_id);
-			SpaceUI::createPostUI(worldPos, p.second, it != m_dynamicLayer.players.end() ? &it->second.name : nullptr);
+			auto	it = m_curDynamicLayer.players.find(p.second.player_id);
+			SpaceUI::createPostUI(
+				worldPos, p.second, it != m_curDynamicLayer.players.end() ? &it->second.name : nullptr);
 			renderer.createCityPoint(worldPos, p.second.type);
 		}
 	}
 
-	SpaceUI::createPlayerUI(m_dynamicLayer.players);
+	SpaceUI::createPlayerUI(m_curDynamicLayer.players);
 }
 
 bool Space::loadLines(const JSONQueryReader& reader)
@@ -320,12 +352,12 @@ bool Space::loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) cons
 	auto values = reader.getValue("rating").asArray();
 	if (values.size() > 0)
 	{
-		//layer.players.reserve(values.size());
+		// layer.players.reserve(values.size());
 		for (const auto& value : values)
 		{
 			std::string id = value.get<std::string>("idx");
 			std::string name = value.get<std::string>("name");
-			uint rating = value.get<uint>("rating");
+			uint		rating = value.get<uint>("rating");
 			layer.players.emplace(std::make_pair(id, Player(id, name, rating)));
 		}
 		return true;
@@ -393,7 +425,7 @@ bool Space::loadCoordinates(const JSONQueryReader& reader)
 	auto values = reader.getValue("coordinate").asArray();
 	if (values.size() > 0)
 	{
-		assert( values.size() == m_points.size() );
+		assert(values.size() == m_points.size());
 		for (const auto& value : values)
 		{
 			Coords pos;
@@ -426,8 +458,8 @@ void Space::postCreateStaticLayer()
 	for (auto& p : m_lines)
 	{
 		Line& line = p.second;
-		auto it1 = m_points.find(line.pid_1);
-		auto it2 = m_points.find(line.pid_2);
+		auto  it1 = m_points.find(line.pid_1);
+		auto  it2 = m_points.find(line.pid_2);
 
 		if (it1 == m_points.end() || it2 == m_points.end())
 		{
@@ -437,7 +469,7 @@ void Space::postCreateStaticLayer()
 
 		line.pt_1 = &it1->second;
 		line.pt_1->lines.emplace_back(&line);
-		
+
 		line.pt_2 = &it2->second;
 		line.pt_2->lines.emplace_back(&line);
 	}
