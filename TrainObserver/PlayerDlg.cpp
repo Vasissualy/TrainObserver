@@ -7,6 +7,9 @@ const DWORD PLAY_TIMER = ::RegisterWindowMessageW(L"WG_FORGE_PLAY_TIMER");
 PlayerDlg::PlayerDlg(AppManager::GameController* pController)
 	: m_pController(pController)
 	, m_bMouseCaptured(false)
+	, m_hParentWnd(HWND_DESKTOP)
+	, m_hThread(NULL)
+	, m_hTerminateEvent(::CreateEvent(NULL, TRUE, FALSE, NULL))
 {
 	
 }
@@ -14,6 +17,7 @@ PlayerDlg::PlayerDlg(AppManager::GameController* pController)
 
 PlayerDlg::~PlayerDlg()
 {
+	::CloseHandle(m_hTerminateEvent);
 }
 
 void PlayerDlg::maxTurn(int val)
@@ -29,15 +33,71 @@ void PlayerDlg::tick(float deltaTime)
 {
 	if (!m_bPause)
 	{
-		m_pController->turn(m_pController->turn() + deltaTime / m_stepTime);
+		auto newTurnValue = m_pController->turn() + deltaTime / m_stepTime;
+		if (newTurnValue >= m_pController->maxTurn())
+		{
+			m_bPause = true;
+		}
+
+		m_pController->turn(newTurnValue);
+		m_tracker.SetPos((int)m_pController->turn());
 	}
+}
+
+void PlayerDlg::create(HWND hWnd)
+{
+	m_hParentWnd = hWnd;
+	m_hThread = ::CreateThread(NULL, 0, ThreadProc, this, 0, NULL);
+}
+
+void PlayerDlg::destroy()
+{
+	::PostThreadMessage(GetThreadId(m_hThread), WM_QUIT, NULL, NULL);
+	::SetEvent(m_hTerminateEvent);
+	PostMessage(WM_USER);
+	::WaitForSingleObject(m_hThread, INFINITE);
+	return;
+}
+
+DWORD WINAPI PlayerDlg::ThreadProc(LPVOID pParam)
+{
+	return reinterpret_cast<PlayerDlg *>(pParam)->mainLoop();
+}
+
+DWORD PlayerDlg::mainLoop()
+{
+	BOOL bRet;
+	MSG msg;
+
+	Create(HWND_DESKTOP);
+	ShowWindow(SW_SHOW);
+
+	while ((bRet = GetMessage(&msg, *this, 0, 0)) != 0)
+	{
+		if (::WaitForSingleObject(m_hTerminateEvent, 0) != WAIT_TIMEOUT)
+		{
+			DestroyWindow();
+			::PostQuitMessage(0);
+		}
+		if (bRet == -1)
+		{
+			// handle the error and possibly exit
+		}
+		else
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+	
+	return 0;
 }
 
 LRESULT PlayerDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	//CenterWindow(GetParent());
 	CRect parentRect;
-	::GetClientRect(GetParent(), &parentRect);
+	::GetClientRect(m_hParentWnd, &parentRect);
 	
 	CRect wndRect;
 	GetWindowRect(&wndRect);
@@ -143,7 +203,14 @@ LRESULT PlayerDlg::OnBnClickedButtonEnd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND
 
 LRESULT PlayerDlg::OnBnClickedButtonPlay(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	m_bPause = false;
+	if (m_pController->turn() < m_pController->maxTurn())
+	{
+		m_bPause = false;
+	}
+	else
+	{
+		m_bPause = true;
+	}
 
 	return 0;
 }
@@ -159,6 +226,26 @@ LRESULT PlayerDlg::OnBnClickedButtonStop(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 
 LRESULT PlayerDlg::OnBnClickedButtonPause(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	m_bPause = !m_bPause;
+	if (m_pController->turn() < m_pController->maxTurn())
+	{
+		m_bPause = !m_bPause;
+	}
+	else
+	{
+		m_bPause = true;
+	}
+	
+	return 0;
+}
+
+
+LRESULT PlayerDlg::OnNMReleasedcaptureSlider(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/)
+{
+	int turn = m_tracker.GetPos();
+	if (turn != -1)
+	{
+		m_pController->turn(float(turn));
+	}
+
 	return 0;
 }

@@ -18,6 +18,8 @@ public:
 
 
 	virtual void tick(float deltaTime) override;
+	void create(HWND hWnd);
+	void destroy();
 
 protected:
 	BEGIN_MSG_MAP(SelectGameDlg)
@@ -34,7 +36,14 @@ protected:
 		COMMAND_HANDLER(IDC_BUTTON_PLAY, BN_CLICKED, OnBnClickedButtonPlay)
 		COMMAND_HANDLER(IDC_BUTTON_STOP, BN_CLICKED, OnBnClickedButtonStop)
 		COMMAND_HANDLER(IDC_BUTTON_PAUSE, BN_CLICKED, OnBnClickedButtonPause)
+		NOTIFY_HANDLER(IDC_SLIDER, NM_RELEASEDCAPTURE, OnNMReleasedcaptureSlider)
 	END_MSG_MAP()
+
+	static DWORD WINAPI ThreadProc(LPVOID);
+	DWORD mainLoop();
+	HWND m_hParentWnd;
+	HANDLE m_hThread;
+	HANDLE m_hTerminateEvent;
 
 	LRESULT		OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT		OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -64,5 +73,6 @@ private:
 
 public:
 	
+	LRESULT OnNMReleasedcaptureSlider(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/);
 };
 

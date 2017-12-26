@@ -172,13 +172,12 @@ AppManager::GameController::~GameController()
 
 void AppManager::GameController::initialize()
 {
-	m_dlg->Create(m_pAppManager->m_windowManager->hwnd());
-	m_dlg->ShowWindow(SW_SHOW);
+	m_dlg->create(m_pAppManager->m_windowManager->hwnd());
 }
 
 void AppManager::GameController::finalize()
 {
-	m_dlg->DestroyWindow();
+	m_dlg->destroy();
 }
 
 void AppManager::GameController::turn(float turnNumber)

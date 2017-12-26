@@ -17,7 +17,7 @@ SelectGameDlg::~SelectGameDlg()
 
 LRESULT SelectGameDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	CenterWindow(GetParent());
+	CenterWindow(::GetDesktopWindow());
 	m_listBox.Attach(GetDlgItem(IDC_LIST));
 	
 	int nItem = 0;
@@ -54,5 +54,18 @@ LRESULT SelectGameDlg::OnLbnSelchangeList(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 {
 	int idx = m_listBox.GetCurSel();
 	::EnableWindow(GetDlgItem(IDOK), idx == LB_ERR ? FALSE : TRUE);
+	return 0;
+}
+
+
+LRESULT SelectGameDlg::OnLbnDblclkList(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int idx = m_listBox.GetCurSel();
+	if (idx != LB_ERR)
+	{
+		m_gameId = m_listBox.GetItemData(m_listBox.GetCurSel());
+		EndDialog(IDOK);
+	}
+
 	return 0;
 }
