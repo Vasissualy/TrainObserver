@@ -6,6 +6,7 @@
 #include "..\ui.h"
 #include <d3d9types.h>
 #include <type_traits>
+#include <map>
 
 
 
@@ -25,6 +26,12 @@ const DWORD colors[COLOR_COUNT] = {D3DCOLOR_ARGB(255, 210, 145, 20),
 								   D3DCOLOR_ARGB(255, 210, 250, 180),
 								   D3DCOLOR_ARGB(255, 180, 210, 250),
 								   D3DCOLOR_ARGB(255, 245, 180, 250)};
+
+const DWORD player_colors[COLOR_COUNT] = {	D3DCOLOR_ARGB(255, 150, 30, 30),
+											D3DCOLOR_ARGB(255, 30, 150, 30),
+											D3DCOLOR_ARGB(255, 30, 30, 150),
+											D3DCOLOR_ARGB(255, 150, 150, 30) };
+
 
 
 uint generateUIIndex(UIObjectType objType, uint objIdx, uint uiElementIdx)
@@ -142,7 +149,7 @@ void createTrainUI(const Vector3& pos, const Train& train, const std::string* pl
 	}
 }
 
-void createPlayerUI(const std::unordered_map<std::string, Player>& players)
+void createPlayerUI(const std::map<std::string, Player>& players)
 {
 	auto& rs = RenderSystemDX9::instance();
 	auto& view = rs.uiManager().view();

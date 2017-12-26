@@ -1,7 +1,7 @@
 #pragma once
 #include "math/vector3.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 struct Post;
 struct Train;
@@ -11,5 +11,5 @@ namespace SpaceUI
 {
 void createPostUI(const Vector3& pos, const Post& post, const std::string* playerName);
 void createTrainUI(const Vector3& pos, const Train& train, const std::string* playerName);
-void createPlayerUI(const std::unordered_map<std::string, Player>& players);
+void createPlayerUI(const std::map<std::string, Player>& players);
 } // namespace SpaceUI

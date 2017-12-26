@@ -316,10 +316,11 @@ bool Space::loadPoints(const JSONQueryReader& reader)
 
 bool Space::loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) const
 {
+	layer.players.clear();
 	auto values = reader.getValue("rating").asArray();
 	if (values.size() > 0)
 	{
-		layer.players.reserve(values.size());
+		//layer.players.reserve(values.size());
 		for (const auto& value : values)
 		{
 			std::string id = value.get<std::string>("idx");

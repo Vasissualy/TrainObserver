@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include "defs.hpp"
 #include "mutex.h"
 
@@ -107,7 +108,7 @@ class Space
 	{
 		std::unordered_map<uint, Train> trains;
 		std::unordered_map<uint, Post>	posts;
-		std::unordered_map<std::string, Player> players;
+		std::map<std::string, Player> players;
 		int								turn = -1;
 	};
 public:
