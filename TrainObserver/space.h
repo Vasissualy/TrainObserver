@@ -84,6 +84,22 @@ struct Post
 	std::string player_id;
 };
 
+struct Player
+{
+	std::string id;
+	std::string name;
+	uint rating = 0;
+
+	Player(const std::string& _id, const std::string& _name, uint _rating):
+		id(_id),
+		name(_name),
+		rating(_rating)
+	{}
+
+	Player()
+	{}
+};
+
 
 class Space
 {
@@ -91,6 +107,7 @@ class Space
 	{
 		std::unordered_map<uint, Train> trains;
 		std::unordered_map<uint, Post>	posts;
+		std::unordered_map<std::string, Player> players;
 		int								turn = -1;
 	};
 public:
@@ -106,6 +123,7 @@ public:
 private:
 	bool loadLines(const JSONQueryReader& reader);
 	bool loadPoints(const JSONQueryReader& reader);
+	bool loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) const;
 	bool loadTrains(const JSONQueryReader& reader, DynamicLayer& layer) const;
 	bool loadPosts(const JSONQueryReader& reader, DynamicLayer& layer) const;
 	bool loadCoordinates(const JSONQueryReader& reader);

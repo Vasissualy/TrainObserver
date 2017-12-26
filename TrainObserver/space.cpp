@@ -121,7 +121,13 @@ bool Space::loadDynamicLayer(const ConnectionManager& manager, int turn, Dynamic
 
 		if (!loadPosts(*reader, layer))
 		{
-			LOG(MSG_ERROR, "Failed to create static layer on space. Reason: cannot load posts.");
+			LOG(MSG_ERROR, "Failed to create dynamic layer on space. Reason: cannot load posts.");
+			return false;
+		}
+
+		if (!loadPlayers(*reader, layer))
+		{
+			LOG(MSG_ERROR, "Failed to create dynamic layer on space. Reason: cannot load players.");
 			return false;
 		}
 	}
@@ -235,7 +241,7 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 			pos = pos * interpolator + pos2 * (1.0f - interpolator);
 		}
 
-		SpaceUI::createTrainUI(pos, train.second);
+		SpaceUI::createTrainUI(pos, train.second, m_dynamicLayer.players[train.second.player_id].name);
 		renderer.setTrain(pos, dir, t.idx);
 	}
 
@@ -247,7 +253,7 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 		if (point)
 		{
 			Vector3 worldPos(coordToVector3(point->pos));
-			SpaceUI::createPostUI(worldPos, p.second);
+			SpaceUI::createPostUI(worldPos, p.second, m_dynamicLayer.players[p.second.player_id].name);
 			renderer.createCityPoint(worldPos, p.second.type);
 		}
 	}
@@ -304,6 +310,25 @@ bool Space::loadPoints(const JSONQueryReader& reader)
 	return false;
 }
 
+bool Space::loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) const
+{
+	auto values = reader.getValue("rating").asArray();
+	if (values.size() > 0)
+	{
+		layer.players.reserve(values.size());
+		for (const auto& value : values)
+		{
+			std::string id = value.get<std::string>("idx");
+			std::string name = value.get<std::string>("name");
+			uint rating = value.get<uint>("rating");
+			layer.players.emplace(std::make_pair(id, Player(id, name, rating)));
+		}
+		return true;
+	}
+
+	return false;
+}
+
 bool Space::loadTrains(const JSONQueryReader& reader, DynamicLayer& layer) const
 {
 	auto values = reader.getValue("train").asArray();
@@ -320,6 +345,7 @@ bool Space::loadTrains(const JSONQueryReader& reader, DynamicLayer& layer) const
 			train.goods = value.get<uint>("goods");
 			train.goods_capacity = value.get<uint>("goods_capacity");
 			train.speed = value.get<int>("speed");
+			train.level = value.get<int>("level");
 			train.player_id = value.get<std::string>("player_id");
 			layer.trains.insert(std::make_pair(train.idx, train));
 		}

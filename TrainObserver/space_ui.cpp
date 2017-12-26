@@ -30,7 +30,7 @@ uint generateUIIndex(UIObjectType objType, uint objIdx, uint uiElementIdx)
 	return ((uint)objType << 24) | (objIdx << 16) | uiElementIdx;
 }
 
-void createPostUI(const Vector3& pos, const Post& post)
+void createPostUI(const Vector3& pos, const Post& post, const std::string& playerName)
 {
 	auto& rs = RenderSystemDX9::instance();
 	auto& view = rs.uiManager().view();
@@ -55,8 +55,9 @@ void createPostUI(const Vector3& pos, const Post& post)
 			case EPostType::CITY:
 				sprintf_s(
 					buf,
-					"%s\npopulation: %d / %d\nproduct: %d / %d\narmor: %d / %d",
+					"%s\nplayer: %s\npopulation: %d / %d\nproduct: %d / %d\narmor: %d / %d",
 					post.name.c_str(),
+					playerName.c_str(),
 					post.population,
 					post.population_capacity,
 					post.product,
@@ -90,7 +91,7 @@ void createPostUI(const Vector3& pos, const Post& post)
 	}
 }
 
-void createTrainUI(const Vector3& pos, const Train& train)
+void createTrainUI(const Vector3& pos, const Train& train, const std::string& playerName)
 {
 	auto& rs = RenderSystemDX9::instance();
 	auto& view = rs.uiManager().view();
@@ -126,7 +127,7 @@ void createTrainUI(const Vector3& pos, const Train& train)
 		sprintf_s(
 			buf,
 			"player: %s\ngoods: %d/%d\nlvl: %d",
-			train.player_id.c_str(),
+			playerName.c_str(),
 			train.goods,
 			train.goods_capacity,
 			train.level);
