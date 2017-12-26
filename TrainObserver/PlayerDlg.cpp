@@ -29,7 +29,14 @@ void PlayerDlg::tick(float deltaTime)
 {
 	if (!m_bPause)
 	{
-		m_pController->turn(m_pController->turn() + deltaTime / m_stepTime);
+		auto newTurnValue = m_pController->turn() + deltaTime / m_stepTime;
+		if (newTurnValue >= m_pController->maxTurn())
+		{
+			m_bPause = true;
+		}
+
+		m_pController->turn(newTurnValue);
+		m_tracker.SetPos((int)m_pController->turn());
 	}
 }
 
@@ -160,5 +167,17 @@ LRESULT PlayerDlg::OnBnClickedButtonStop(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 LRESULT PlayerDlg::OnBnClickedButtonPause(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	m_bPause = !m_bPause;
+	return 0;
+}
+
+
+LRESULT PlayerDlg::OnNMReleasedcaptureSlider(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/)
+{
+	int turn = m_tracker.GetPos();
+	if (turn != -1)
+	{
+		m_pController->turn(float(turn));
+	}
+
 	return 0;
 }

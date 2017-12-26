@@ -34,6 +34,7 @@ protected:
 		COMMAND_HANDLER(IDC_BUTTON_PLAY, BN_CLICKED, OnBnClickedButtonPlay)
 		COMMAND_HANDLER(IDC_BUTTON_STOP, BN_CLICKED, OnBnClickedButtonStop)
 		COMMAND_HANDLER(IDC_BUTTON_PAUSE, BN_CLICKED, OnBnClickedButtonPause)
+		NOTIFY_HANDLER(IDC_SLIDER, NM_RELEASEDCAPTURE, OnNMReleasedcaptureSlider)
 	END_MSG_MAP()
 
 	LRESULT		OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -64,5 +65,6 @@ private:
 
 public:
 	
+	LRESULT OnNMReleasedcaptureSlider(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/);
 };
 

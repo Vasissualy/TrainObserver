@@ -183,7 +183,6 @@
     <ClInclude Include="mutex.h" />
     <ClInclude Include="PlayerDlg.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="scene_manager.h" />
     <ClInclude Include="SelectGameDlg.h" />
     <ClInclude Include="skybox.h" />

@@ -108,7 +108,6 @@
     <ClInclude Include="connection_dlg.h">
       <Filter>Diaolgs</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="PlayerDlg.h">

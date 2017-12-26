@@ -24,6 +24,7 @@ protected:
 		COMMAND_ID_HANDLER(IDOK, OnCloseCmd)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCloseCmd)
 		COMMAND_HANDLER(IDC_LIST, LBN_SELCHANGE, OnLbnSelchangeList)
+		COMMAND_HANDLER(IDC_LIST, LBN_DBLCLK, OnLbnDblclkList)
 	END_MSG_MAP()
 
 	LRESULT		OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -34,5 +35,7 @@ private:
 	std::map<uint32_t, std::string> m_games;
 	CListBox m_listBox;
 	uint32_t m_gameId;
+public:
+	LRESULT OnLbnDblclkList(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
