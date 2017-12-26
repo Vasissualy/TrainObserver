@@ -100,7 +100,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	static bool bIgnoreMouseMove = false;
 	static POINT initCursorPos = {0,0};
 
-	bool bNoFurtherProcessing = false;
+	//bool bNoFurtherProcessing = false;
 	//auto res = RenderSystemDX9::instance().uiManager().msgProc(hWnd, msg, wParam, lParam, &bNoFurtherProcessing);
 	//if (bNoFurtherProcessing)
 	//{

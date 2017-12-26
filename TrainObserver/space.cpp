@@ -241,8 +241,10 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 			pos = pos * interpolator + pos2 * (1.0f - interpolator);
 		}
 
-		SpaceUI::createTrainUI(pos, train.second, m_dynamicLayer.players[train.second.player_id].name);
+		auto itp = m_dynamicLayer.players.find(train.second.player_id);
+		SpaceUI::createTrainUI(pos, train.second, itp != m_dynamicLayer.players.end() ? &itp->second.name : nullptr);
 		renderer.setTrain(pos, dir, t.idx);
+
 	}
 
 	for (const auto& p : m_dynamicLayer.posts)
@@ -253,11 +255,13 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 		if (point)
 		{
 			Vector3 worldPos(coordToVector3(point->pos));
-			SpaceUI::createPostUI(worldPos, p.second, m_dynamicLayer.players[p.second.player_id].name);
+			auto it = m_dynamicLayer.players.find(p.second.player_id);
+			SpaceUI::createPostUI(worldPos, p.second, it != m_dynamicLayer.players.end() ? &it->second.name : nullptr);
 			renderer.createCityPoint(worldPos, p.second.type);
 		}
 	}
 
+	SpaceUI::createPlayerUI(m_dynamicLayer.players);
 }
 
 bool Space::loadLines(const JSONQueryReader& reader)
