@@ -21,3 +21,6 @@
 *Release/
 .vs/
 server.py/
+PredictedInputCache_Release_x86.dat
+PredictedInputCache_Release_x86.dat
+Release_2.zip

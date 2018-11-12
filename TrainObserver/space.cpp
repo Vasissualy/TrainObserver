@@ -35,7 +35,7 @@ std::shared_ptr<JSONQueryReader> getLayer(const ConnectionManager& connect, Spac
 	std::string msg;
 	if (connect.receiveMessage(msg) != Result::OKEY)
 	{
-		LOG(MSG_ERROR, "Failed to create space. Reason: receive MAP message failed");
+		LOG(MSG_ERROR, "Failed to create space. Reason: receive MAP message failed: %s", msg.c_str());
 		return nullptr;
 	}
 
@@ -298,7 +298,7 @@ void Space::addDynamicSceneToRender(SpaceRenderer& renderer, float interpolator)
 
 bool Space::loadLines(const JSONQueryReader& reader)
 {
-	auto values = reader.getValue("line").asArray();
+	auto values = reader.getValue("lines").asArray();
 	if (values.size() > 0)
 	{
 		m_lines.reserve(values.size());
@@ -306,7 +306,7 @@ bool Space::loadLines(const JSONQueryReader& reader)
 		{
 			uint idx = value.get<uint>("idx");
 			uint length = value.get<uint>("length");
-			auto points = value.getValue("point").asArray();
+			auto points = value.getValue("points").asArray();
 			uint pid_1, pid_2;
 
 			if (points.size() == 2)
@@ -330,14 +330,14 @@ bool Space::loadLines(const JSONQueryReader& reader)
 
 bool Space::loadPoints(const JSONQueryReader& reader)
 {
-	auto values = reader.getValue("point").asArray();
+	auto values = reader.getValue("points").asArray();
 	if (values.size() > 0)
 	{
 		m_points.reserve(values.size());
 		for (const auto& value : values)
 		{
 			uint idx = value.get<uint>("idx");
-			uint post_id = value.get<uint>("post_id");
+			uint post_id = value.get<uint>("post_idx");
 			m_points.insert(std::make_pair(idx, SpacePoint(idx, post_id)));
 		}
 		return true;
@@ -422,7 +422,7 @@ bool Space::loadPosts(const JSONQueryReader& reader, DynamicLayer& layer) const
 
 bool Space::loadCoordinates(const JSONQueryReader& reader)
 {
-	auto values = reader.getValue("coordinate").asArray();
+	auto values = reader.getValue("coordinates").asArray();
 	if (values.size() > 0)
 	{
 		assert(values.size() == m_points.size());

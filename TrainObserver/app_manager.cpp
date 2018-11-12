@@ -98,7 +98,8 @@ bool AppManager::connect(const char* servername, uint16_t portNumber)
 			JSONQueryReader data(msg);
 			std::map<uint32_t, std::string> games;
 			std::map<uint32_t, unsigned int> lengths;
-			for (const auto& game : data.asArray())
+			auto gamesData = data.getValue("games").asArray();
+			for (const auto& game : gamesData)
 			{
 				std::string name = game.get<std::string>("name");
 				uint32_t idx = game.get<unsigned int>("idx");
