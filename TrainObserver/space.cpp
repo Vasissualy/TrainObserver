@@ -349,7 +349,7 @@ bool Space::loadPoints(const JSONQueryReader& reader)
 bool Space::loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) const
 {
 	layer.players.clear();
-	auto values = reader.getValue("rating").asArray();
+	auto values = reader.getValue("ratings").asArray();
 	if (values.size() > 0)
 	{
 		// layer.players.reserve(values.size());
@@ -363,12 +363,12 @@ bool Space::loadPlayers(const JSONQueryReader& reader, DynamicLayer& layer) cons
 		return true;
 	}
 
-	return false;
+	return true;
 }
 
 bool Space::loadTrains(const JSONQueryReader& reader, DynamicLayer& layer) const
 {
-	auto values = reader.getValue("train").asArray();
+	auto values = reader.getValue("trains").asArray();
 	if (values.size() > 0)
 	{
 		layer.trains.reserve(values.size());
@@ -383,18 +383,18 @@ bool Space::loadTrains(const JSONQueryReader& reader, DynamicLayer& layer) const
 			train.goods_capacity = value.get<uint>("goods_capacity");
 			train.speed = value.get<int>("speed");
 			train.level = value.get<int>("level");
-			train.player_id = value.get<std::string>("player_id");
+			train.player_id = value.get<std::string>("player_idx");
 			layer.trains.insert(std::make_pair(train.idx, train));
 		}
 		return true;
 	}
 
-	return false;
+	return true;
 }
 
 bool Space::loadPosts(const JSONQueryReader& reader, DynamicLayer& layer) const
 {
-	auto values = reader.getValue("post").asArray();
+	auto values = reader.getValue("posts").asArray();
 	if (values.size() > 0)
 	{
 		layer.posts.reserve(values.size());
@@ -411,7 +411,7 @@ bool Space::loadPosts(const JSONQueryReader& reader, DynamicLayer& layer) const
 			post.product_capacity = value.get<uint>("product_capacity");
 			post.type = static_cast<EPostType>(value.get<uint>("type"));
 			post.name = value.get<std::string>("name");
-			post.player_id = value.get<std::string>("player_id");
+			post.player_id = value.get<std::string>("player_idx");
 			layer.posts.insert(std::make_pair(post.idx, post));
 		}
 		return true;
